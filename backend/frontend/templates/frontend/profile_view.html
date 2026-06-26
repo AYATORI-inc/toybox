@@ -215,6 +215,33 @@
     .profile-view-delete-btn:hover {
         background: rgba(239, 68, 68, 0.2);
     }
+
+    .profile-view-pin-btn {
+        position: absolute;
+        top: 0.35rem;
+        left: 0.35rem;
+        z-index: 5;
+        font-size: 0.65rem;
+        padding: 0.2rem 0.45rem;
+        border-radius: 6px;
+        border: 1px solid rgba(250, 204, 21, 0.55);
+        background: rgba(15, 17, 21, 0.85);
+        color: #facc15;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    .profile-view-pin-btn:hover {
+        background: rgba(250, 204, 21, 0.15);
+    }
+    .profile-view-pin-btn.is-pinned {
+        border-color: rgba(250, 204, 21, 0.9);
+        background: rgba(250, 204, 21, 0.25);
+        color: #fde047;
+    }
+
+    .profile-view-submission-item.is-pinned {
+        box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.45);
+    }
     
     .profile-view-submission-item.game {
         border-color: #a855f7;
@@ -807,8 +834,16 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const meMeta = await meMetaRes.json();
+                const meUserRes = await fetch('/api/users/me/', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const meUser = meUserRes.ok ? await meUserRes.json() : {};
                 const myKeys = new Set([meMeta.display_id, meMeta.url_id].filter(Boolean));
-                const isSelf = myKeys.has(targetDisplayId);
+                const viewingOther = urlParams.get('user');
+                const authorId = profileAuthorUserId || metaData.authorUserId || metaData.author_user_id;
+                const isSelf = !viewingOther
+                    || myKeys.has(targetDisplayId)
+                    || (authorId && meUser.id && String(meUser.id) === String(authorId));
                 profileIsSelf = isSelf;
 
                 const followStats = document.getElementById('profile-follow-stats');
@@ -928,7 +963,8 @@
                 }
                 nextCursor = data.nextCursor || null;
             } while (nextCursor);
-            
+
+            sortSubmissionsByPin();
             renderSubmissions();
             document.getElementById('load-more-button').style.display = 'none';
         } catch (err) {
@@ -997,7 +1033,8 @@
             const pTriggerClass = pUserReaction ? 'has-reacted' : '';
 
             return `
-                <div class="profile-view-submission-item ${isGame ? 'game' : (isVideo ? 'video' : '')}" data-submission-id="${s.id}">
+                <div class="profile-view-submission-item ${s.pinned ? 'is-pinned' : ''} ${isGame ? 'game' : (isVideo ? 'video' : '')}" data-submission-id="${s.id}">
+                    ${profileIsSelf ? `<button type="button" class="profile-view-pin-btn ${s.pinned ? 'is-pinned' : ''}" onclick="toggleProfilePin('${s.id}', event)" title="${s.pinned ? 'ピン留めを解除' : '先頭にピン留め（最大3件）'}">📌</button>` : ''}
                     ${profileIsSelf ? `<button type="button" class="profile-view-delete-btn" onclick="deleteProfileSubmission('${s.id}', event)" title="投稿を削除">🗑</button>` : ''}
                     ${content}
                     ${isGame && gameUrl ? `
@@ -1020,6 +1057,51 @@
         }).join('');
     }
     
+    function sortSubmissionsByPin() {
+        submissions.sort((a, b) => {
+            const aPinned = a.pinned ? 1 : 0;
+            const bPinned = b.pinned ? 1 : 0;
+            if (aPinned !== bPinned) return bPinned - aPinned;
+            const aTime = a.pinnedAt || a.createdAt || '';
+            const bTime = b.pinnedAt || b.createdAt || '';
+            if (aPinned && bPinned && aTime !== bTime) return bTime.localeCompare(aTime);
+            return (b.createdAt || '').localeCompare(a.createdAt || '');
+        });
+    }
+
+    async function toggleProfilePin(id, ev) {
+        if (ev) ev.stopPropagation();
+        if (!profileIsSelf) return;
+        const item = submissions.find(s => String(s.id) === String(id));
+        if (!item) return;
+        const method = item.pinned ? 'DELETE' : 'POST';
+        try {
+            const res = await fetch('/api/submissions/' + encodeURIComponent(id) + '/pin/', {
+                method,
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'X-CSRFToken': csrftoken
+                }
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+                item.pinned = !!data.pinned;
+                item.pinnedAt = data.pinnedAt || null;
+                sortSubmissionsByPin();
+                renderSubmissions();
+            } else if (res.status === 400) {
+                alert(data.error || 'ピン留めは最大3件までです');
+            } else if (res.status === 403) {
+                alert('自分の投稿のみピン留めできます');
+            } else {
+                alert('ピン留めの更新に失敗しました');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('エラーが発生しました');
+        }
+    }
+
     async function deleteProfileSubmission(id, ev) {
         if (ev) ev.stopPropagation();
         if (!profileIsSelf) return;

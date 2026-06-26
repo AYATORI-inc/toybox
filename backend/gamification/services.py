@@ -53,7 +53,7 @@ def load_card_master():
                 
                 # Handle image_url
                 if image_url == '-' or not image_url:
-                    image_url = f'/uploads/cards/{card_id}.png'
+                    image_url = f'/uploads/cards/{card_id}.webp'
                 
                 # 追加項目（TSVにあれば読む、なければコードから推定または空）
                 attribute = (row.get('attribute') or '').strip() or None
@@ -245,7 +245,7 @@ def grant_immediate_rewards(meta: UserMeta, boost_rarity: bool = False) -> dict:
             image_url = card_row.image_url
             if not image_url or image_url == '-':
                 # Use /uploads/cards/ path for card images (works with media.py URL patterns)
-                image_url = f'/uploads/cards/{card_id}.png'
+                image_url = f'/uploads/cards/{card_id}.webp'
             elif image_url.startswith('/static/frontend/uploads/'):
                 # Convert /static/frontend/uploads/ to /uploads/ for consistency
                 image_url = image_url.replace('/static/frontend/uploads/', '/uploads/')

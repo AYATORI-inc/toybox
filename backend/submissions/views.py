@@ -111,6 +111,48 @@ class SubmissionViewSet(viewsets.ModelViewSet):
         count = SubmissionBookmark.objects.filter(submission=submission).count()
         return Response({'ok': True, 'bookmarked': True, 'created': created, 'bookmarkCount': count})
 
+    MAX_PROFILE_PINS = 3
+
+    @action(detail=True, methods=['post', 'delete'], url_path='pin')
+    def pin(self, request, pk=None):
+        """プロフィール投稿のピン留め（最大3件）。POSTで固定、DELETEで解除。"""
+        from rest_framework.exceptions import PermissionDenied
+
+        submission = self.get_object()
+        if submission.author_id != request.user.id:
+            raise PermissionDenied('自分の投稿のみピン留めできます')
+
+        if request.method == 'DELETE':
+            submission.pinned_at = None
+            submission.save(update_fields=['pinned_at', 'updated_at'])
+            return Response({'ok': True, 'pinned': False, 'pinnedAt': None})
+
+        if submission.pinned_at is not None:
+            return Response({
+                'ok': True,
+                'pinned': True,
+                'pinnedAt': submission.pinned_at.isoformat(),
+            })
+
+        pinned_count = Submission.objects.filter(
+            author=request.user,
+            deleted_at__isnull=True,
+            pinned_at__isnull=False,
+        ).count()
+        if pinned_count >= self.MAX_PROFILE_PINS:
+            return Response(
+                {'error': f'ピン留めは最大{self.MAX_PROFILE_PINS}件までです'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        submission.pinned_at = timezone.now()
+        submission.save(update_fields=['pinned_at', 'updated_at'])
+        return Response({
+            'ok': True,
+            'pinned': True,
+            'pinnedAt': submission.pinned_at.isoformat(),
+        })
+
     @action(detail=True, methods=['post'], url_path='react/submit_medal')
     def react_submit_medal(self, request, pk=None):
         """React to submission with submit_medal (後方互換エンドポイント)."""
@@ -1168,24 +1210,30 @@ class UserSubmissionsView(APIView):
                 author=user,
                 deleted_at__isnull=True
             )
-            queryset = queryset.select_related('author', 'author__meta').order_by('-created_at')
-            
+            queryset = queryset.select_related('author', 'author__meta')
+
             # Pagination
             page_size = int(request.query_params.get('limit', 12))
             cursor = request.query_params.get('cursor')
-            
+
+            pinned_qs = queryset.filter(pinned_at__isnull=False).order_by('-pinned_at')
+            unpinned_qs = queryset.filter(pinned_at__isnull=True).order_by('-created_at')
+
             if cursor:
                 try:
                     from datetime import datetime
                     cursor_date = datetime.fromisoformat(cursor.replace('Z', '+00:00'))
-                    # Make timezone-aware if needed
                     if timezone.is_naive(cursor_date):
                         cursor_date = timezone.make_aware(cursor_date)
-                    queryset = queryset.filter(created_at__lt=cursor_date)
+                    unpinned_qs = unpinned_qs.filter(created_at__lt=cursor_date)
+                    submissions_qs = list(unpinned_qs[:page_size])
                 except (ValueError, AttributeError, TypeError):
-                    pass
-            
-            submissions_qs = list(queryset[:page_size])
+                    submissions_qs = list(unpinned_qs[:page_size])
+            else:
+                pinned = list(pinned_qs[:SubmissionViewSet.MAX_PROFILE_PINS])
+                remaining = max(0, page_size - len(pinned))
+                unpinned = list(unpinned_qs[:remaining])
+                submissions_qs = pinned + unpinned
             
             # Check if current user has liked each submission
             current_user = request.user if request.user.is_authenticated else None
@@ -1357,6 +1405,14 @@ class UserSubmissionsView(APIView):
                     except Exception as e:
                         logger.warning(f'Failed to get reactions for submission {sub.id}: {e}')
 
+                    pinned_at_str = None
+                    try:
+                        pinned_at = getattr(sub, 'pinned_at', None)
+                        if pinned_at:
+                            pinned_at_str = pinned_at.isoformat()
+                    except (AttributeError, ValueError, TypeError):
+                        pinned_at_str = None
+
                     from submissions.constants import AI_TOOL_LABELS
                     total_rx = sum(int(x.get('count') or 0) for x in all_reactions)
                     is_own_post = bool(current_user and sub.author_id == current_user.id)
@@ -1382,6 +1438,8 @@ class UserSubmissionsView(APIView):
                         'activeTitleImageUrl': None,  # v2.0: 実画像未設定時はNone
                         'titleColor': title_color,
                         'isOwnPost': is_own_post,
+                        'pinnedAt': pinned_at_str,
+                        'pinned': bool(pinned_at_str),
                     })
                 except Exception as e:
                     logger.error(f'Error processing submission {sub.id}: {str(e)}', exc_info=True)
@@ -1391,9 +1449,13 @@ class UserSubmissionsView(APIView):
             next_cursor = None
             if len(submissions_qs) == page_size:
                 try:
-                    last_submission = submissions_qs[-1]
-                    if last_submission.created_at:
-                        next_cursor = last_submission.created_at.isoformat()
+                    last_unpinned = None
+                    for sub in reversed(submissions_qs):
+                        if sub.pinned_at is None:
+                            last_unpinned = sub
+                            break
+                    if last_unpinned and last_unpinned.created_at:
+                        next_cursor = last_unpinned.created_at.isoformat()
                 except (AttributeError, ValueError, IndexError):
                     next_cursor = None
             

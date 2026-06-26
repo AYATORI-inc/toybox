@@ -349,7 +349,7 @@ function showArticleReward(data) {
         const card = data.rewardCard;
         document.getElementById('ar-rarity-text').textContent = `${card.rarity || 'N'} 獲得！`;
         document.getElementById('ar-card-name').textContent = card.card_name || 'Card';
-        const imgUrl = (card.image_url && card.image_url !== '-') ? card.image_url : `/uploads/cards/${card.card_id || 'C001'}.png`;
+        const imgUrl = (card.image_url && card.image_url !== '-') ? card.image_url : `/uploads/cards/${card.card_id || 'C001'}.webp`;
         const img = document.getElementById('ar-card-img');
         img.src = imgUrl;
         img.onerror = function() { this.style.display = 'none'; };

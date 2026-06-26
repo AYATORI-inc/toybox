@@ -154,7 +154,7 @@ class Command(BaseCommand):
                 defaults={
                     "name": r.name,
                     "rarity": rarity,
-                    "image_url": r.image_url or f"/uploads/cards/{r.code}.png",
+                    "image_url": r.image_url or f"/uploads/cards/{r.code}.webp",
                     "description": r.description,
                 },
             )

@@ -2388,7 +2388,7 @@
             } else {
                 // image_urlがない場合はデフォルトパスを使用（card_idをそのまま使用）
                 // エフェクトカード（Eプレフィックス）も正しく処理される
-                imageUrl = `/uploads/cards/${card.card_id || 'C001'}.png`;
+                imageUrl = `/uploads/cards/${card.card_id || 'C001'}.webp`;
             }
             
             // デバッグログ（開発時のみ）

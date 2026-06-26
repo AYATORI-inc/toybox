@@ -81,7 +81,7 @@ class MyCardsView(views.APIView):
                         'card_type': card_type_val,
                         'card_name': card_name,
                         'rarity': rarity_str,
-                        'image_url': card.image_url or f'/uploads/cards/{card.code}.png',
+                        'image_url': card.image_url or f'/uploads/cards/{card.code}.webp',
                         'attribute': getattr(card, 'attribute', None) or None,
                         'description': getattr(card, 'description', None) or None,
                     }

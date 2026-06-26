@@ -39,6 +39,9 @@ class Submission(models.Model):
     # Status and moderation
     status = models.CharField('ステータス', max_length=20, choices=Status.choices, default=Status.PUBLIC)
     
+    # Ver 2.25: プロフィール投稿ピン留め（最大3件）
+    pinned_at = models.DateTimeField('ピン留め日時', null=True, blank=True, db_index=True)
+
     # Soft delete
     deleted_at = models.DateTimeField('削除日時', null=True, blank=True, db_index=True)
     delete_reason = models.TextField('削除理由', blank=True, null=True)

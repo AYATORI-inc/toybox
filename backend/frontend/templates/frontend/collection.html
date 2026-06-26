@@ -375,7 +375,6 @@
         <h3>カードゲーム実装化予定</h3>
         <div class="video-container">
             <video controls preload="metadata" poster="{% static 'frontend/videos/card-game-poster.jpg' %}">
-                <source src="{% static 'frontend/videos/card-game-preview.mp4' %}" type="video/mp4">
                 <source src="{% static 'frontend/videos/card-game-preview.webm' %}" type="video/webm">
                 お使いのブラウザは動画再生に対応していません。
             </video>
@@ -569,7 +568,7 @@
         
         grid.innerHTML = filtered.map(e => {
             const meta = e.meta || {};
-            const imageUrl = meta.image_url || `/uploads/cards/${meta.card_id || e.id}.png`;
+            const imageUrl = meta.image_url || `/uploads/cards/${meta.card_id || e.id}.webp`;
             const quantity = e.quantity || 1;
             const attr = meta.attribute ? String(meta.attribute).trim() : '';
             const attrData = attrColors.includes(attr) ? ` data-attr="${escHtml(attr)}"` : '';

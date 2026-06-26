@@ -1,14 +1,10 @@
-"""
-Custom context processors for Django templates.
-"""
+"""Template context processors."""
 from django.conf import settings
 
 
-def admin_url(request):
-    """Add ADMIN_URL to template context."""
+def app_version(request):
+    version = getattr(settings, 'APP_VERSION', '2.25')
     return {
-        'ADMIN_URL': getattr(settings, 'ADMIN_URL', 'admin'),
+        'APP_VERSION': version,
+        'APP_VERSION_DISPLAY': f'Ver {version}',
     }
-
-
-

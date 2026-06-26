@@ -92,11 +92,11 @@ media/
 *.log
 db.sqlite3
 db.sqlite3-journal
-<<<<<<< Updated upstream
 
 backend/public/uploads/
-=======
->>>>>>> Stashed changes
+
+# --- ローカル開発用 Docker override（本番には反映しない） ---
+backend/docker-compose.override.yml
 
 # バックアップファイルを無視
 backend/*.sql

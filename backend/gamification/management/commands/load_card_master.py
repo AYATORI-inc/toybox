@@ -109,7 +109,7 @@ class Command(BaseCommand):
                 
                 # Handle image_url: if '-', use default path
                 if image_url == '-' or not image_url:
-                    image_url = f'/uploads/cards/{card_id}.png'
+                    image_url = f'/uploads/cards/{card_id}.webp'
                 
                 # Debug: print values for C004
                 if card_id == 'C004':
