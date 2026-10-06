@@ -42,6 +42,20 @@ class ArticleListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         qs = Article.objects.select_related('author').prefetch_related('reactions').order_by('-created_at')
         user = self.request.user
+        
+        # 検索キーワード
+        search_q = self.request.query_params.get('search', '').strip()
+        if search_q:
+            from django.db.models import Q
+            # タイトル、本文（JSONから抽出）、著者名で検索
+            # JSONから段落テキストを抽出するための部分マッチ
+            qs = qs.filter(
+                Q(title__icontains=search_q) |
+                Q(author__display_id__icontains=search_q) |
+                Q(author__meta__display_name__icontains=search_q) |
+                Q(body__contains=search_q)  # JSON内のテキスト検索
+            ).distinct()
+        
         # 著者フィルター（author_user_id / author / display_id / login_code / StudySphereUser）
         author_user_id = self.request.query_params.get('author_user_id')
         author_id = self.request.query_params.get('author')
