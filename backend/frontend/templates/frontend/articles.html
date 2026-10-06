@@ -26,7 +26,7 @@
 .article-card:hover { border-color: var(--steam-gold-500); cursor: pointer; }
 .article-thumb-wrap { position: relative; flex-shrink: 0; }
 .article-thumb {
-    width: 120px; height: 80px; object-fit: cover; border-radius: 6px;
+    width: 120px; height: 80px; object-fit: contain; border-radius: 6px;
     background: var(--steam-iron-800);
 }
 .article-thumb-placeholder {
@@ -76,6 +76,18 @@
         <button class="tab-btn" onclick="switchTab('mine')" id="tab-mine" style="display:none;">自分の記事</button>
     </div>
 
+    <!-- 検索フォーム -->
+    <div style="margin-bottom: 1.5rem;">
+        <input 
+            type="text" 
+            id="search-input" 
+            placeholder="記事を検索... (タイトル・本文・著者)" 
+            style="width: 100%; background: var(--steam-iron-900); border: 1px solid var(--steam-iron-700); border-radius: 6px; padding: 0.6rem 0.75rem; color: var(--steam-iron-100); font-size: 0.9rem; box-sizing: border-box;"
+            onkeydown="handleSearchKeydown(event)"
+        >
+        <div style="font-size: 0.75rem; color: var(--steam-iron-400); margin-top: 0.3rem;">💡 ヒント: タイトル、本文、著者名から検索できます</div>
+    </div>
+
     <div id="articles-loading">読み込み中...</div>
     <div id="articles-list" style="display:none;"></div>
     <div id="articles-empty" class="articles-empty" style="display:none;">
@@ -112,6 +124,7 @@ let currentTab = 'all';
 let currentPage = 1;
 const PAGE_SIZE = 10;
 let totalCount = 0;
+let currentSearchQuery = '';
 
 async function loadArticles(tab, page) {
     page = page || 1;
@@ -124,9 +137,14 @@ async function loadArticles(tab, page) {
     const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
 
     try {
-        const url = tab === 'mine'
-            ? `${API_BASE}/mine/`
-            : `${API_BASE}/?page=${page}`;
+        let url;
+        if (tab === 'mine') {
+            url = `${API_BASE}/mine/`;
+        } else {
+            // 検索クエリを含める
+            const searchParam = currentSearchQuery ? `&search=${encodeURIComponent(currentSearchQuery)}` : '';
+            url = `${API_BASE}/?page=${page}${searchParam}`;
+        }
         const res = await fetch(url, { headers });
         if (!res.ok) throw new Error('fetch error');
         const data = await res.json();
@@ -233,9 +251,24 @@ async function deleteArticle(slug) {
 function switchTab(tab) {
     currentTab = tab;
     currentPage = 1;
+    currentSearchQuery = '';  // タブ切り替え時に検索をクリア
+    document.getElementById('search-input').value = '';
     document.getElementById('tab-all').classList.toggle('active', tab === 'all');
     document.getElementById('tab-mine').classList.toggle('active', tab === 'mine');
     loadArticles(tab, 1);
+}
+
+function handleSearchKeydown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        performSearch();
+    }
+}
+
+function performSearch() {
+    currentSearchQuery = document.getElementById('search-input').value.trim();
+    currentPage = 1;
+    loadArticles('all', 1);
 }
 
 function escHtml(s) {
