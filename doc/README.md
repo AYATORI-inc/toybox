@@ -37,4 +37,5 @@
 ## 移行・実装
 
 - **Backend**: [backend/README_DJANGO.md](../backend/README_DJANGO.md)
-- **移行ドキュメント**: [docs/migration/](../docs/migration/)
+- **移行ドキュメント**: [migration/](./migration/)
+- **本番移行（2026/10）**: [transfer202610/](./transfer202610/)

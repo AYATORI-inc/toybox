@@ -7,13 +7,13 @@ BACKUP_TYPE=$2
 DETAILS=$3
 
 # メール送信先
-TO_EMAILS="maki@ayatori-inc.co.jp,tech@ayatori-inc.co.jp"
+TO_EMAILS="kobuchi1106@myou-kou.com"
 
-# メールサーバー設定（環境に応じて変更）
-SMTP_HOST="smtp.gmail.com"
+# メールサーバー設定（Xserver + Google Workspace）
+SMTP_HOST="sv17149.xserver.jp"
 SMTP_PORT="587"
-SMTP_USER="your-email@gmail.com"
-SMTP_PASS="your-app-password"
+SMTP_USER="no-reply@tricycle-stars.ayatori-inc.co.jp"
+SMTP_PASS="ayatorimio123!"
 
 # メール内容を生成
 if [ "$STATUS" = "success" ]; then
@@ -31,7 +31,7 @@ HOSTNAME=$(hostname)
 
 # メール本文を作成
 cat > /tmp/backup_notification.txt << EOF
-From: TOYBOX Backup System <noreply@toybox.ayatori-inc.co.jp>
+From: TOYBOX Backup System <no-reply@tricycle-stars.ayatori-inc.co.jp>
 To: $TO_EMAILS
 Subject: $SUBJECT
 Content-Type: text/plain; charset=UTF-8
@@ -57,19 +57,38 @@ TOYBOX バックアップシステム
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EOF
 
-# msmtpを使ってメール送信
+# メール送信（msmtp → mail → Python SMTP の順で試行）
+SEND_RESULT=1
 if command -v msmtp &> /dev/null; then
-    cat /tmp/backup_notification.txt | msmtp --from=noreply@toybox.ayatori-inc.co.jp -t $TO_EMAILS
+    cat /tmp/backup_notification.txt | msmtp --from="$SMTP_USER" -t $TO_EMAILS
+    SEND_RESULT=$?
+elif command -v mail &> /dev/null; then
+    mail -s "$SUBJECT" $TO_EMAILS < /tmp/backup_notification.txt
+    SEND_RESULT=$?
+elif command -v python3 &> /dev/null; then
+    python3 - "$SMTP_HOST" "$SMTP_PORT" "$SMTP_USER" "$SMTP_PASS" "$TO_EMAILS" "$SUBJECT" <<'PY'
+import smtplib, sys
+from email.mime.text import MIMEText
+
+host, port, user, password, to_email, subject = sys.argv[1:7]
+body = open("/tmp/backup_notification.txt", encoding="utf-8").read()
+# ヘッダ行を除いた本文だけ使う
+parts = body.split("\n\n", 1)
+text = parts[1] if len(parts) > 1 else body
+msg = MIMEText(text, "plain", "utf-8")
+msg["From"] = f"TOYBOX Backup System <{user}>"
+msg["To"] = to_email
+msg["Subject"] = subject
+with smtplib.SMTP(host, int(port), timeout=30) as server:
+    server.starttls()
+    server.login(user, password)
+    server.send_message(msg)
+print("email sent via python smtp")
+PY
     SEND_RESULT=$?
 else
-    # msmtpがない場合はmailコマンドを試す
-    if command -v mail &> /dev/null; then
-        mail -s "$SUBJECT" $TO_EMAILS < /tmp/backup_notification.txt
-        SEND_RESULT=$?
-    else
-        echo "メール送信コマンドが見つかりません（msmtpまたはmail）"
-        SEND_RESULT=1
-    fi
+    echo "メール送信コマンドが見つかりません（msmtp / mail / python3）"
+    SEND_RESULT=1
 fi
 
 # 一時ファイル削除
