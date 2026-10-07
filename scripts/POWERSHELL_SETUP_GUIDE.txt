@@ -1,0 +1,52 @@
+# PowerShell セットアップ - クイックガイド
+
+## ❌ エラーが出た場合
+
+```
+このシステムではスクリプトの実行が無効になっているため...
+```
+
+## ✅ 解決方法（3 ステップ）
+
+### Step 1: 管理者 PowerShell を開く
+
+```
+スタートメニュー
+  → PowerShell
+  → 右クリック
+  → 「管理者として実行」
+```
+
+### Step 2: 実行ポリシーを変更
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+プロンプトが出たら **「Y」(はい)** を選択
+
+### Step 3: スクリプトを実行
+
+```powershell
+cd C:\github\toybox
+powershell -File scripts/local-setup.ps1
+```
+
+## 📋 確認
+
+```powershell
+# 実行ポリシーが変更されたか確認
+Get-ExecutionPolicy -Scope CurrentUser
+# 期待: RemoteSigned
+```
+
+## 💡 ポイント
+
+- ✅ **管理者として実行** が重要
+- ✅ Docker Desktop が起動していることを確認
+- ✅ インターネット接続が必要（イメージダウンロード用）
+
+---
+
+すべてのセットアップファイルは準備完了です。
+頑張ってください！🚀
