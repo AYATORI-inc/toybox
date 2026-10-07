@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'drf_spectacular',  # OpenAPI schema generation
     'django_htmx',  # Optional HTMX support
     'storages',  # django-storages for S3
+    'django_celery_beat',  # Celery Beat for periodic tasks
     # Local apps
     'users',
     'submissions',

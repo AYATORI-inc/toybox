@@ -1,37 +1,13 @@
 version: '3.9'
 
 services:
-  caddy:
-    build:
-      context: ./caddy
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - caddy-data:/data
-      - caddy-config:/config
-      - static_volume:/app/staticfiles:ro
-      - media_volume:/app/public/uploads:ro
-    environment:
-      - DOMAIN=toybox.ayatori-inc.co.jp
-      - WEB_HOST=web:8000
-    depends_on:
-      - web
-    networks:
-      - default
-    healthcheck:
-      test: ["CMD", "caddy", "list", "routes"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   web:
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    ports:
+      - "8000:8000"
     environment:
       - DEBUG=False
       - DB_HOST=db
@@ -39,13 +15,14 @@ services:
       - DB_USER=toybox_user
       - DB_PASSWORD=toybox_password
       - REDIS_URL=redis://redis:6379/0
-      - ALLOWED_HOSTS=toybox.ayatori-inc.co.jp,localhost
+      - ALLOWED_HOSTS=localhost,127.0.0.1,toybox.ayatori-inc.co.jp
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     volumes:
+      - ./backend:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/public/uploads
     networks:
@@ -104,6 +81,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
+      - ./backend:/app
       - media_volume:/app/public/uploads
     networks:
       - default
@@ -126,6 +104,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - ./backend:/app
     networks:
       - default
 
@@ -133,8 +113,6 @@ volumes:
   db_data:
   static_volume:
   media_volume:
-  caddy-data:
-  caddy-config:
 
 networks:
   default:
