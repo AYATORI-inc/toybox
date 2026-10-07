@@ -1,0 +1,74 @@
+# Caddy Configuration for Toybox Production
+# ドメイン: toybox.ayatori-inc.co.jp
+
+{$DOMAIN:localhost} {
+    # HTTP → HTTPS リダイレクト
+    encode gzip
+    
+    # ヘルスチェック
+    handle /health {
+        reverse_proxy {$WEB_HOST} {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-For {remote_host}
+            timeout 30s
+        }
+    }
+    
+    # API エンドポイント
+    handle /api/* {
+        reverse_proxy {$WEB_HOST} {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-For {remote_host}
+            timeout 30s
+        }
+    }
+    
+    # 大容量アップロード
+    handle /api/submit/upload* {
+        reverse_proxy {$WEB_HOST} {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-For {remote_host}
+            timeout 600s
+        }
+    }
+    
+    # SSO エンドポイント
+    handle /sso/* {
+        reverse_proxy {$WEB_HOST} {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-For {remote_host}
+            timeout 90s
+        }
+    }
+    
+    # スタティックファイル（直接配信）
+    handle /static/* {
+        root * /app/staticfiles
+        rewrite * {path}
+        file_server
+    }
+    
+    # メディアファイル
+    handle /uploads/* {
+        reverse_proxy {$WEB_HOST} {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-For {remote_host}
+            timeout 60s
+        }
+    }
+    
+    # ファビコン
+    handle /favicon.ico {
+        reverse_proxy {$WEB_HOST} {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-For {remote_host}
+        }
+    }
+    
+    # デフォルト（すべてを reverse proxy）
+    reverse_proxy {$WEB_HOST} {
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Forwarded-For {remote_host}
+        timeout 30s
+    }
+}
