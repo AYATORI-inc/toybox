@@ -7,11 +7,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-BACKUP_DIR="/backup/toybox/volumes"
+BACKUP_DIR="/home/ayatori/backups/toybox/volumes"
 # 同一バックアップセット（DB + メディア）で時刻を揃えるため、外部から指定できるようにする
 # 例: BACKUP_DATE=20260202_210001
 DATE="${BACKUP_DATE:-$(date +%Y%m%d_%H%M%S)}"
-LOGFILE="/var/log/toybox_backup.log"
+LOGFILE="/home/ayatori/backups/toybox_backup.log"
 NOTIFY_SCRIPT="/var/www/toybox/scripts/send_backup_notification.sh"
 
 # ============================================================================

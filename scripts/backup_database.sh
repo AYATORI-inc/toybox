@@ -24,11 +24,11 @@ fi
 # 設定
 # ============================================================================
 
-BACKUP_DIR="/backup/toybox/database"
+BACKUP_DIR="/home/ayatori/backups/toybox/database"
 # 同一バックアップセット（DB + メディア）で時刻を揃えるため、外部から指定できるようにする
 # 例: BACKUP_DATE=20260202_210001
 DATE="${BACKUP_DATE:-$(date +%Y%m%d_%H%M%S)}"
-LOGFILE="/var/log/toybox_backup.log"
+LOGFILE="/home/ayatori/backups/toybox_backup.log"
 NOTIFY_SCRIPT="/var/www/toybox/scripts/send_backup_notification.sh"
 
 # ============================================================================
@@ -45,7 +45,7 @@ NOTIFY_SCRIPT="/var/www/toybox/scripts/send_backup_notification.sh"
 # ============================================================================
 CONTAINER_NAME="${DB_CONTAINER_NAME:-toybox-db-1}"
 DATABASE_NAME="${DB_NAME:-toybox}"
-DB_USER="${DB_USER:-postgres}"
+DB_USER="${DB_USER:-toybox_user}"
 
 # 指定コンテナが稼働していない場合は、稼働中のDBコンテナを自動探索する
 # （旧スタック backend-* は避け、それ以外の *-db-1 を優先する）

@@ -16,8 +16,8 @@ set -euo pipefail
 # 2 にすると「昨日と今日」の 2 世代を残す。cron や /etc/environment で上書き可。
 export BACKUP_KEEP_GENERATIONS="${BACKUP_KEEP_GENERATIONS:-1}"
 
-LOGFILE="/var/log/toybox_backup.log"
-BACKEND_DIR="${BACKEND_DIR:-/var/www/toybox/backend}"
+LOGFILE="/home/ayatori/backups/toybox_backup.log"
+BACKEND_DIR="${BACKEND_DIR:-/var/www/toybox}"
 SCRIPTS_DIR="${SCRIPTS_DIR:-/var/www/toybox/scripts}"
 
 log() {
@@ -25,7 +25,7 @@ log() {
 }
 
 compose() {
-  (cd "$BACKEND_DIR" && sudo docker compose "$@")
+  (cd "$BACKEND_DIR" && docker compose "$@")
 }
 
 RESTORE_RAN=0
@@ -117,11 +117,11 @@ compose stop web worker beat
 
 # 2) DBダンプ（.dump）
 log "Running DB dump backup..."
-sudo bash "$SCRIPTS_DIR/backup_database.sh"
+bash "$SCRIPTS_DIR/backup_database.sh"
 
 # 3) メディアボリュームバックアップ（tar.gz）
 log "Running media volume backup..."
-sudo bash "$SCRIPTS_DIR/backup_volumes.sh"
+bash "$SCRIPTS_DIR/backup_volumes.sh"
 
 log "Nightly backup completed successfully"
 

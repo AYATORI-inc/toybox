@@ -1,14 +1,15 @@
 # Caddy Configuration for Toybox Production
 # ドメイン: toybox.ayatori-inc.co.jp
+# テストドメイン: toybox-check.ayatori-inc.co.jp
 
-{$DOMAIN:localhost} {
-    # HTTP → HTTPS リダイレクト
+# HTTP のみで動作（HTTPS は後で設定）
+http://{$DOMAIN:localhost} {
     encode gzip
     
     # ヘルスチェック
     handle /health {
         reverse_proxy {$WEB_HOST} {
-            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Proto http
             header_up X-Forwarded-For {remote_host}
             timeout 30s
         }
@@ -17,7 +18,7 @@
     # API エンドポイント
     handle /api/* {
         reverse_proxy {$WEB_HOST} {
-            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Proto http
             header_up X-Forwarded-For {remote_host}
             timeout 30s
         }
@@ -26,7 +27,7 @@
     # 大容量アップロード
     handle /api/submit/upload* {
         reverse_proxy {$WEB_HOST} {
-            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Proto http
             header_up X-Forwarded-For {remote_host}
             timeout 600s
         }
@@ -35,7 +36,7 @@
     # SSO エンドポイント
     handle /sso/* {
         reverse_proxy {$WEB_HOST} {
-            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Proto http
             header_up X-Forwarded-For {remote_host}
             timeout 90s
         }
@@ -51,7 +52,7 @@
     # メディアファイル
     handle /uploads/* {
         reverse_proxy {$WEB_HOST} {
-            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Proto http
             header_up X-Forwarded-For {remote_host}
             timeout 60s
         }
@@ -60,14 +61,14 @@
     # ファビコン
     handle /favicon.ico {
         reverse_proxy {$WEB_HOST} {
-            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Proto http
             header_up X-Forwarded-For {remote_host}
         }
     }
     
     # デフォルト（すべてを reverse proxy）
     reverse_proxy {$WEB_HOST} {
-        header_up X-Forwarded-Proto {scheme}
+        header_up X-Forwarded-Proto http
         header_up X-Forwarded-For {remote_host}
         timeout 30s
     }
