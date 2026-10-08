@@ -154,7 +154,19 @@ SSO_SYSTEM_KEY = os.environ.get('SSO_SYSTEM_KEY', '')
 SSO_SERVICE_TOKEN = os.environ.get('SSO_SERVICE_TOKEN', '')
 
 # Admin URL (for security, customizable via environment variable)
-ADMIN_URL = os.environ.get('ADMIN_URL', 'admin')
+# Trailing/leading slashes are stripped so values like "internal-workspace/" work.
+ADMIN_URL = os.environ.get('ADMIN_URL', 'admin').strip('/')
+
+# CSRF trusted origins (required for HTTPS admin login behind Cloudflare Tunnel etc.)
+# Comma-separated list via CSRF_TRUSTED_ORIGINS env, with production defaults.
+_csrf_trusted = os.environ.get(
+    'CSRF_TRUSTED_ORIGINS',
+    'https://toybox.ayatori-inc.co.jp,https://studysphere.ayatori-inc.co.jp,http://localhost:8000,http://127.0.0.1:8000',
+)
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_trusted.split(',') if o.strip()]
+
+# Trust X-Forwarded-Proto from reverse proxy / Cloudflare Tunnel
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # REST Framework
 REST_FRAMEWORK = {

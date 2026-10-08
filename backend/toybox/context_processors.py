@@ -4,7 +4,9 @@ from django.conf import settings
 
 def app_version(request):
     version = getattr(settings, 'APP_VERSION', '2.25')
+    admin_url = getattr(settings, 'ADMIN_URL', 'admin').strip('/')
     return {
         'APP_VERSION': version,
         'APP_VERSION_DISPLAY': f'Ver {version}',
+        'ADMIN_URL': admin_url,
     }

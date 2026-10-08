@@ -4,8 +4,10 @@ Celery configuration for ToyBox project.
 import os
 from celery import Celery
 
-# Set the default Django settings module
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'toybox.settings.dev')
+# Default to prod. Local CLI/tests can override via DJANGO_SETTINGS_MODULE.
+# IMPORTANT: toybox/__init__.py imports this before wsgi.py runs, so a "dev"
+# default here would force gunicorn onto settings.dev (DEBUG=True, empty CSRF).
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'toybox.settings.prod')
 
 app = Celery('toybox')
 
