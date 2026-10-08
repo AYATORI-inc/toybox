@@ -16,6 +16,8 @@ services:
       - DB_PASSWORD=toybox_password
       - REDIS_URL=redis://redis:6379/0
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,toybox.ayatori-inc.co.jp,toyboxssh.ayatori-inc.co.jp
+      - ADMIN_URL=internal-workspace
+      - DJANGO_SETTINGS_MODULE=toybox.settings.prod
     depends_on:
       db:
         condition: service_healthy
@@ -75,6 +77,8 @@ services:
       - DB_USER=toybox_user
       - DB_PASSWORD=toybox_password
       - REDIS_URL=redis://redis:6379/0
+      - ADMIN_URL=internal-workspace
+      - DJANGO_SETTINGS_MODULE=toybox.settings.prod
     depends_on:
       db:
         condition: service_healthy
@@ -99,6 +103,8 @@ services:
       - DB_USER=toybox_user
       - DB_PASSWORD=toybox_password
       - REDIS_URL=redis://redis:6379/0
+      - ADMIN_URL=internal-workspace
+      - DJANGO_SETTINGS_MODULE=toybox.settings.prod
     depends_on:
       db:
         condition: service_healthy
